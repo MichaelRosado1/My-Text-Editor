@@ -79,11 +79,17 @@ void disableRawMode() {
 		killPgrm("tcsetattr");
 	}	
 }
+/** Terminal Output **/
+
+void editorRefreshScreen() {
+	//writing 4 bytes to the terminal 
+	write(STDOUT_FILENO, "\x1b[2J", 4);
+}
 /** user input **/
 
 char readKey() {
 	char c;
-	int charToRead;
+	int readStatus;
 
 	/**
 	  while the terminal is still reading characters
@@ -91,8 +97,8 @@ char readKey() {
 			-> call killPgrm() which exits the program
 		->if not then return the inputted character
 	  **/
-	while ((charToRead= read(STDIN_FILENO, &c, 1)) != 1) {
-		if (charToRead== -1 && errno != EAGAIN) {
+	while ((readStatus= read(STDIN_FILENO, &c, 1)) != 1) {
+		if (readStatus== -1 && errno != EAGAIN) {
 			killPgrm("read");
 		}
 		return c;
@@ -118,6 +124,7 @@ int main() {
 	enableRawMode();
 	//letter typed into terminal
 	while (1) {
+		editorRefreshScreen();
 		processKeypress();
 	}
 }
