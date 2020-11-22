@@ -79,6 +79,38 @@ void disableRawMode() {
 		killPgrm("tcsetattr");
 	}	
 }
+/** user input **/
+
+char readKey() {
+	char c;
+	int charToRead;
+
+	/**
+	  while the terminal is still reading characters
+		-> check if the character returns and error and if that given error is NOT a EAGAIN(time out error) then
+			-> call killPgrm() which exits the program
+		->if not then return the inputted character
+	  **/
+	while ((charToRead= read(STDIN_FILENO, &c, 1)) != 1) {
+		if (charToRead== -1 && errno != EAGAIN) {
+			killPgrm("read");
+		}
+		return c;
+	}	
+	return c;
+}
+
+
+void processKeypress() {
+	
+	char c = readKey();
+
+	switch (c) {
+		case CTRL_KEY('q'):
+			exit(0);
+			break;
+	}
+}
 
 /** INITIALIZE  **/
 
@@ -86,22 +118,6 @@ int main() {
 	enableRawMode();
 	//letter typed into terminal
 	while (1) {
-		// sets c to char value for 0
-		char c = '\0';
-
-		//while chars are still being typed in terminal and the letter q hasn't been typed
-		// EAGIN is the error returned due to time outs(return -1) so ignore it as an error
-		if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) {
-			killPgrm("read");
-		}
-		//if the char c is a control(non-printable) erno character
-		if (iscntrl(c)) {
-			//we only want to print the ascii value of the character
-			printf("%d\r\n", c);
-		} else {
-			//print the ascii value and the letter inputted surrounded by ' 
-			printf("%d ('%c')\r\n", c, c);
-		}
-		if (c == CTRL_KEY('q')) break;
+		processKeypress();
 	}
 }
