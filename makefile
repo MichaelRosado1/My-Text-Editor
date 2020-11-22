@@ -1,2 +1,2 @@
-kilo: kilo.cpp
-	g++ kilo.cpp -o kilo -Wall -Wextra -pedantic
+editor: editor.cpp
+	g++ editor.cpp -o editor -Wall -Wextra -pedantic
