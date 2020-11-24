@@ -83,6 +83,8 @@ void disableRawMode() {
 
 void editorRefreshScreen() {
 	//writing 4 bytes to the terminal 
+	//	-> "\x1b" is the escape character
+	//		->"\x1b[" tells the terminal to begin an escape sequence which instructs the terminal to do things like color text
 	write(STDOUT_FILENO, "\x1b[2J", 4);
 }
 /** user input **/
