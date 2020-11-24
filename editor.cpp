@@ -16,13 +16,28 @@ void enableRawMode();
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
 
+
+
 struct editorConfig {
 	struct termios originalTermios;
+	int terminalRows;
+	int terminalCols;
 };
 
 struct editorConfig config;
 
 /** Terminal **/
+int getTerminalSize(int *rows, int *cols) {
+	struct winsize windowSize;
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize) == -1 || windowSize.ws_col == 0) {
+		return -1;
+	} else {
+		*cols = windowSize.ws_col;
+		*rows = windowSize.ws_row;
+		return 0;	
+	}
+}
 void killPgrm(const char *s) {
 	//if an error occurs, clear the terminal and place the cursor in the top left corner
 	write(STDOUT_FILENO, "\x1b[2J", 4);
@@ -99,7 +114,7 @@ void drawEditorRows() {
 	}	
 	*/
 
-	for (int i = 0; i < 30; i++) {
+	for (int i = 0; i < config.terminalRows; i++) {
 		write(STDOUT_FILENO, "~\r\n", 3);
 	}
 }
@@ -160,8 +175,17 @@ void processKeypress() {
 
 /** INITIALIZE  **/
 
+//initializes the row and col size of the editor config struct
+void initEditor() {
+	if (getTerminalSize(&config.terminalRows, &config.terminalCols) == -1) {
+		killPgrm("getTerminaSize");
+	}
+}
+
+
 int main() {
 	enableRawMode();
+	initEditor();
 	//letter typed into terminal
 	while (1) {
 		editorRefreshScreen();
