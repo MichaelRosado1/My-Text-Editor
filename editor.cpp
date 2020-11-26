@@ -7,6 +7,7 @@
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 
+int getCursorPosition(int *, int *); 
 void disableRawMode();
 void enableRawMode();
 
@@ -25,13 +26,18 @@ struct editorConfig {
 };
 
 struct editorConfig config;
-
 /** Terminal **/
+
+
+//edits config struct's terminalRow and terminalCol 
 int getTerminalSize(int *rows, int *cols) {
 	struct winsize windowSize;
 
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize) == -1 || windowSize.ws_col == 0) {
-		return -1;
+	if (1 || ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize) == -1 || windowSize.ws_col == 0) {
+		if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) {
+			return -1;
+		}	
+		return getCursorPosition(rows, cols);	
 	} else {
 		*cols = windowSize.ws_col;
 		*rows = windowSize.ws_row;
@@ -101,19 +107,6 @@ void disableRawMode() {
 }
 /** Terminal Output **/
 void drawEditorRows() {
-	/*
-	Does not work, does not stop printing ~
-	struct winsize userTerminal;
-
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &userTerminal);
-
-	int rows =(int) (userTerminal.ws_col);
-
-	for (int i = 0; i < rows; i++) {
-		write(STDOUT_FILENO, "~\r\n", 3); 
-	}	
-	*/
-
 	for (int i = 0; i < config.terminalRows; i++) {
 		write(STDOUT_FILENO, "~\r\n", 3);
 	}
@@ -158,7 +151,6 @@ char readKey() {
 	return c;
 }
 
-
 void processKeypress() {
 	
 	char c = readKey();
@@ -172,6 +164,33 @@ void processKeypress() {
 		break;
 	}
 }
+
+int getCursorPosition(int *rows, int *cols) {
+	char buf[32];
+	unsigned int i = 0;
+
+	if (write(STDOUT_FILENO, "\x1b[6n", 4) !=4) {
+		return -1;
+	}
+	
+	while (i < sizeof(buf) - 1) {
+		if (read(STDIN_FILENO, &buf[i], 1)) break;
+		if (buf[i] == 'R') break;
+		i++;	
+	}
+	buf[i] = '\0';
+
+	/*
+	if (buf[0] != '\x1b' || buf[1] != '[') {
+		return -1;
+	}
+	if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) {
+		return -1;
+	}
+	*/
+	return 0;
+}
+
 
 /** INITIALIZE  **/
 
