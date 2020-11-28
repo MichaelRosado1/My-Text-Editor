@@ -109,7 +109,10 @@ void disableRawMode() {
 /** Terminal Output **/
 void drawEditorRows() {
 	for (int i = 0; i < config.terminalRows; i++) {
-		write(STDOUT_FILENO, "~\r\n", 3);
+		write(STDOUT_FILENO, "~", 1);
+		if (i < config.terminalRows - 1) {
+			write(STDOUT_FILENO, "\r\n", 2);
+		}	
 	}
 }
 
