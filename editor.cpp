@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
+#include <stdio.h>
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 
@@ -33,7 +34,7 @@ struct editorConfig config;
 int getTerminalSize(int *rows, int *cols) {
 	struct winsize windowSize;
 
-	if (1 || ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize) == -1 || windowSize.ws_col == 0) {
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize) == -1 || windowSize.ws_col == 0) {
 		if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) {
 			return -1;
 		}	
@@ -165,6 +166,7 @@ void processKeypress() {
 	}
 }
 
+//uses the cursor to find the hight of the users terminal
 int getCursorPosition(int *rows, int *cols) {
 	char buf[32];
 	unsigned int i = 0;
@@ -172,22 +174,24 @@ int getCursorPosition(int *rows, int *cols) {
 	if (write(STDOUT_FILENO, "\x1b[6n", 4) !=4) {
 		return -1;
 	}
-	
+	// reading the terminal buffer	
 	while (i < sizeof(buf) - 1) {
-		if (read(STDIN_FILENO, &buf[i], 1)) break;
+		if (read(STDIN_FILENO, &buf[i], 1) != 1) break;
 		if (buf[i] == 'R') break;
+	
 		i++;	
 	}
+	//sets the buf[i] to null
+	//clears the terminal buffer
 	buf[i] = '\0';
 
-	/*
-	if (buf[0] != '\x1b' || buf[1] != '[') {
-		return -1;
-	}
-	if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) {
-		return -1;
-	}
-	*/
+	//if the first char isn't the escape key or the second input isn't the escape sequence symbol return -1
+	if (buf[0] != '\x1b' || buf[1] != '[') return -1;
+
+	//if there aren't two argument lists  successfully filled, return -1
+	if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) return -1;
+	
+
 	return 0;
 }
 
