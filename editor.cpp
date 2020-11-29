@@ -15,17 +15,14 @@ int getCursorPosition(int *, int *);
 void disableRawMode();
 void enableRawMode();
 
-
 /** Data **/
 
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
-
-struct AppendBuf {
-	std::vector<char> *b;
-	int len;
+struct abuf {
+	char *b;
+	int length;
 };
-
 struct editorConfig {
 	struct termios originalTermios;
 	int terminalRows;
@@ -34,6 +31,24 @@ struct editorConfig {
 
 struct editorConfig config;
 /** Terminal **/
+
+
+void abAppend(struct abuf *ab,const char *s, int len) {
+	//cast type char* to realloc since c++ uses 'new'
+	// using c style realloc to learn more about integrating c and c++
+	char *newBuff = new char[ab->length + len]; 
+	//mempy(&newbuff[ab->len], s, len)
+	//1. where s will be copied to,
+	//2. the string to be copied
+	//the number of characters to be copied
+	for (int i = 0; i < ab->length; i++) {
+		newBuff[i] = ab->b[i];
+	}
+	newBuff[ab->length + len] = *s;
+
+	ab->b = newBuff;
+	ab->length += len;	
+}
 
 
 //edits config struct's terminalRow and terminalCol 
@@ -113,39 +128,29 @@ void disableRawMode() {
 	}	
 }
 
-void bufferAppend(struct AppendBuf *buf, const char *s, int length) {
-}
-
-void freeAB(struct AppendBuf *buff) {
-	std::free(buff->b);
-}
-
 /** Terminal Output **/
-void drawEditorRows() {
+void drawEditorRows(struct abuf *ab) {
 	for (int i = 0; i < config.terminalRows; i++) {
-		write(STDOUT_FILENO, "~", 1);
+		abAppend(ab,"~", 1); 
 		if (i < config.terminalRows - 1) {
-			write(STDOUT_FILENO, "\r\n", 2);
+			abAppend(ab, "\r\n", 2);
 		}	
 	}
 }
-
 void editorRefreshScreen() {
-
+	struct abuf ab = ABUF_INIT;
+//	struct AppendBuf *ab; 
+	abAppend(&ab, "\x1b[2J", 4);
 	//*** escape sequences found using vt100.net ***
-
-	//writing 4 bytes to the terminal 
-	//	-> "\x1b" is the escape character
-	//		->"\x1b[" tells the terminal to begin an escape sequence which instructs the terminal to do things like color text
-	write(STDOUT_FILENO, "\x1b[2J", 4);
-
-	//writes 3 bytes to the terminal
+//writes 3 bytes to the terminal
 	//	->places the cursor in the "home" position or the top left corner
-	write(STDOUT_FILENO, "\x1b[H", 3);
+	abAppend(&ab, "\x1b[H", 3);	
 
-	drawEditorRows();
+	drawEditorRows(&ab);
 
-	write(STDOUT_FILENO, "\x1b[H", 3); 
+	abAppend(&ab, "\x1b[H", 3);
+
+	write(STDOUT_FILENO,ab.b, ab.length ); 
 
 }
 /** user input **/
