@@ -1,12 +1,15 @@
 #include <sys/ioctl.h>
+#include <vector>
 #include <stdlib.h>
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 #include <termios.h>
 #include <errno.h>
 #include <stdio.h>
-
+//** Defines **//
 #define CTRL_KEY(k) ((k) & 0x1f)
+#define ABUF_INIT {NULL, 0}
 
 int getCursorPosition(int *, int *); 
 void disableRawMode();
@@ -18,7 +21,10 @@ void enableRawMode();
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
 
-
+struct AppendBuf {
+	std::vector<char> *b;
+	int len;
+};
 
 struct editorConfig {
 	struct termios originalTermios;
@@ -106,6 +112,14 @@ void disableRawMode() {
 		killPgrm("tcsetattr");
 	}	
 }
+
+void bufferAppend(struct AppendBuf *buf, const char *s, int length) {
+}
+
+void freeAB(struct AppendBuf *buff) {
+	std::free(buff->b);
+}
+
 /** Terminal Output **/
 void drawEditorRows() {
 	for (int i = 0; i < config.terminalRows; i++) {
