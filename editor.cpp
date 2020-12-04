@@ -33,21 +33,15 @@ struct editorConfig config;
 /** Terminal **/
 
 
+//appends terminal buffer to new character array
 void abAppend(struct abuf *ab,const char *s, int len) {
-	//cast type char* to realloc since c++ uses 'new'
-	// using c style realloc to learn more about integrating c and c++
-	char *newBuff = new char[ab->length + len]; 
-	//mempy(&newbuff[ab->len], s, len)
-	//1. where s will be copied to,
-	//2. the string to be copied
-	//the number of characters to be copied
-	for (int i = 0; i < ab->length; i++) {
-		newBuff[i] = ab->b[i];
-	}
-	newBuff[ab->length + len] = *s;
-
-	ab->b = newBuff;
-	ab->length += len;	
+	//allocates enough space for current buf + new length of buf
+	char *buff = (char*) std::realloc(ab->b, ab->length + len);
+	if (buff == NULL) return;
+	//copies the memory from the buffer and stores it in a new location
+	std::memcpy(&buff[ab->length], s, len);
+	ab->b = buff;
+	ab->length += len;
 }
 
 
@@ -149,7 +143,7 @@ void editorRefreshScreen() {
 	drawEditorRows(&ab);
 
 	abAppend(&ab, "\x1b[H", 3);
-
+	std::cout<<ab.b;
 	write(STDOUT_FILENO,ab.b, ab.length ); 
 
 }
@@ -237,3 +231,4 @@ int main() {
 		processKeypress();
 	}
 }
+
