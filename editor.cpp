@@ -125,6 +125,18 @@ void disableRawMode() {
 /** Terminal Output **/
 void drawEditorRows(struct abuf *ab) {
 	for (int i = 0; i < config.terminalRows; i++) {
+		//third down the screen 
+		if (i == config.terminalRows / 3) {
+			char welcomeMessage[80];
+			int length = std::snprintf(welcomeMessage, sizeof(welcomeMessage), "Welcome to My-Text editor:)");
+			if (length > config.terminalCols) {
+				length = config.terminalCols;
+				abAppend(ab, welcomeMessage, length);
+			} else {
+				abAppend(ab, "~", 1);
+			}
+
+		}
 		//puts '~' on the fist position in every row
 		abAppend(ab,"~", 1); 
 		//clears the line
