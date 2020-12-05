@@ -131,14 +131,11 @@ void drawEditorRows(struct abuf *ab) {
 			int length = std::snprintf(welcomeMessage, sizeof(welcomeMessage), "Welcome to My-Text editor:)");
 			if (length > config.terminalCols) {
 				length = config.terminalCols;
-				abAppend(ab, welcomeMessage, length);
-			} else {
-				abAppend(ab, "~", 1);
 			}
-
+			abAppend(ab, welcomeMessage, length);
+		} else {
+			abAppend(ab, "~", 1);
 		}
-		//puts '~' on the fist position in every row
-		abAppend(ab,"~", 1); 
 		//clears the line
 		abAppend(ab, "\x1b[K", 3);
 		//if the position reaches the end of the row, return and start a new line 
