@@ -125,25 +125,32 @@ void disableRawMode() {
 /** Terminal Output **/
 void drawEditorRows(struct abuf *ab) {
 	for (int i = 0; i < config.terminalRows; i++) {
+		//puts '~' on the fist position in every row
 		abAppend(ab,"~", 1); 
+		//clears the line
+		abAppend(ab, "\x1b[K", 3);
+		//if the position reaches the end of the row, return and start a new line 
 		if (i < config.terminalRows - 1) {
 			abAppend(ab, "\r\n", 2);
 		}	
 	}
 }
 void editorRefreshScreen() {
-	struct abuf ab = ABUF_INIT;
-//	struct AppendBuf *ab; 
-	abAppend(&ab, "\x1b[2J", 4);
 	//*** escape sequences found using vt100.net ***
-//writes 3 bytes to the terminal
-	//	->places the cursor in the "home" position or the top left corner
+	// may not work on older terminal versions because of the 'l' and 'h' commands(hide cursor)
+	struct abuf ab = ABUF_INIT;
+
+	//hides the cursor and positions it before refreshing to prevent flickering
+	abAppend(&ab, "\x1b[?25l", 6);
+
 	abAppend(&ab, "\x1b[H", 3);	
 
 	drawEditorRows(&ab);
 
 	abAppend(&ab, "\x1b[H", 3);
-	std::cout<<ab.b;
+
+	abAppend(&ab, "\x1b[?25h", 6);
+
 	write(STDOUT_FILENO,ab.b, ab.length ); 
 
 }
