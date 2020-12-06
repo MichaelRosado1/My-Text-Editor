@@ -128,10 +128,21 @@ void drawEditorRows(struct abuf *ab) {
 		//third down the screen 
 		if (i == config.terminalRows / 3) {
 			char welcomeMessage[80];
+			//snprintf returns the number of characters that would be printed if the buffer byte size is large enough
 			int length = std::snprintf(welcomeMessage, sizeof(welcomeMessage), "Welcome to My-Text editor:)");
+			//if the message is greater than the terminal screen we shorten it
 			if (length > config.terminalCols) {
 				length = config.terminalCols;
 			}
+			//half of the terminal width
+			int padding = (config.terminalCols - length) / 2;
+			if (padding) {
+				abAppend(ab, "~", 1);
+				padding--;
+			}
+			//while the padding isn't 0, print a space
+			//	->moves to half of the terminal width
+			while (padding--) abAppend(ab, " ", 1);
 			abAppend(ab, welcomeMessage, length);
 		} else {
 			abAppend(ab, "~", 1);
