@@ -27,6 +27,7 @@ struct editorConfig {
 	struct termios originalTermios;
 	int terminalRows;
 	int terminalCols;
+	int cursorX, cursorY;
 };
 
 struct editorConfig config;
@@ -167,7 +168,15 @@ void editorRefreshScreen() {
 
 	drawEditorRows(&ab);
 
-	abAppend(&ab, "\x1b[H", 3);
+	char buffer[32];
+	
+	//"\x1b[%d;%dH"
+	//	->%d means put the following params here
+	// the H command tells the terminal how much to move the cursor and in which direction
+	std::snprintf(buffer, sizeof(buffer), "\x1b[%d;%dH", config.cursorY + 1, config.cursorX + 1);
+	
+	abAppend(&ab, buffer, std::strlen(buffer));
+
 
 	abAppend(&ab, "\x1b[?25h", 6);
 
@@ -175,6 +184,25 @@ void editorRefreshScreen() {
 
 }
 /** user input **/
+
+//implementing vim style keypresses
+
+void moveCursor(char keypress) {
+	switch (keypress) {
+		case 'j':
+			config.cursorY--;
+			break;
+		case 'k':
+			config.cursorY++;
+			break;
+		case 'h':
+			config.cursorX--;
+			break;
+		case 'l':
+			config.cursorX++;
+			break;
+	}
+}
 
 char readKey() {
 	char c;
@@ -196,16 +224,21 @@ char readKey() {
 }
 
 void processKeypress() {
-	
+//used switch case because if else was not working with CTRL_KEY I will change this later for easier readability	
 	char c = readKey();
-
 	switch (c) {
 		case CTRL_KEY('q'):
 		//if cntrl q is pressed clear the screen
-		write(STDOUT_FILENO, "\x1b[2J", 4);
-		write(STDOUT_FILENO, "\x1b[H", 3);
-		exit(0);
-		break;
+			write(STDOUT_FILENO, "\x1b[2J", 4);
+			write(STDOUT_FILENO, "\x1b[H", 3);
+			exit(0);
+			break;
+		case 'j':
+		case 'k':
+		case 'l':
+		case 'h':
+			moveCursor(c);
+			break;
 	}
 }
 
@@ -243,6 +276,8 @@ int getCursorPosition(int *rows, int *cols) {
 
 //initializes the row and col size of the editor config struct
 void initEditor() {
+	config.cursorX = 0;
+	config.cursorY = 0;
 	if (getTerminalSize(&config.terminalRows, &config.terminalCols) == -1) {
 		killPgrm("getTerminaSize");
 	}
