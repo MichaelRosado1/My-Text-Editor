@@ -218,7 +218,33 @@ char readKey() {
 		if (readStatus== -1 && errno != EAGAIN) {
 			killPgrm("read");
 		}
-		return c;
+
+		//if teh read  character is the escape sequence
+		if (c =='\x1b') {
+			//storing 3 bytes to account for longer sequences
+			char sequence[3];
+			if (read(STDIN_FILENO, &sequence[0], 1) != 1) return '\x1b';
+			if (read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';	
+
+			if (sequence[0] == '[') {
+				//the terminal maps the arrow commands to A,B,C,D
+				switch (sequence[1]) {
+					case 'A': 
+						return 'k'; 
+					case 'B':
+						return 'j';
+					case 'C':
+						return 'l';
+					case 'D':
+						return 'h';
+				}
+			}
+
+			return '\x1b';
+			
+		} else {
+			return c;
+		}
 	}	
 	return c;
 }
