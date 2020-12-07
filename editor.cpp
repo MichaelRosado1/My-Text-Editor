@@ -17,6 +17,12 @@ void enableRawMode();
 
 /** Data **/
 
+enum keys {
+	ARROW_LEFT = 'h',
+	ARROW_RIGHT = 'l',
+	ARROW_UP = 'k',
+	ARROW_DOWN = 'j'	
+};
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
 struct abuf {
@@ -189,16 +195,16 @@ void editorRefreshScreen() {
 
 void moveCursor(char keypress) {
 	switch (keypress) {
-		case 'j':
+		case ARROW_DOWN :
 			config.cursorY--;
 			break;
-		case 'k':
+		case ARROW_UP:
 			config.cursorY++;
 			break;
-		case 'h':
+		case ARROW_LEFT:
 			config.cursorX--;
 			break;
-		case 'l':
+		case ARROW_RIGHT:
 			config.cursorX++;
 			break;
 	}
@@ -231,13 +237,13 @@ char readKey() {
 			//the terminal maps the arrow commands to A,B,C,D
 			switch (sequence[1]) {
 				case 'A': 
-					return 'k'; 
+					return ARROW_UP; 
 				case 'B':
-					return 'j';
+					return ARROW_DOWN;
 				case 'C':
-					return 'l';
+					return ARROW_RIGHT;
 				case 'D':
-					return 'h';
+					return ARROW_LEFT; 
 			}
 		}
 
@@ -258,10 +264,10 @@ void processKeypress() {
 			write(STDOUT_FILENO, "\x1b[H", 3);
 			exit(0);
 			break;
-		case 'j':
-		case 'k':
-		case 'l':
-		case 'h':
+		case ARROW_DOWN:
+		case ARROW_UP:
+		case ARROW_RIGHT:
+		case ARROW_LEFT:
 			moveCursor(c);
 			break;
 	}
