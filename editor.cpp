@@ -23,6 +23,8 @@ enum keys {
 	ARROW_RIGHT,
 	ARROW_UP,
 	ARROW_DOWN, 
+	HOME_KEY,
+	END_KEY,
 	PAGE_UP,
 	PAGE_DOWN	
 };
@@ -249,27 +251,31 @@ int readKey() {
 				if (read(STDIN_FILENO, &sequence[2], 1) != 1) return '\x1b';
 				if (sequence[2] == '~') {
 					switch (sequence[1]) {
+						case '1': return HOME_KEY;
+						case '4': return END_KEY;
 						case '5': return PAGE_UP;
 						case '6': return PAGE_DOWN;
+						case '7': return HOME_KEY;
+						case '8': return END_KEY;
 					}
 				}
 			} else {
-					//the terminal maps the arrow commands to A,B,C,D
-					switch (sequence[1]) {
-					case 'A': 
-						return ARROW_UP; 
-					case 'B':
-						return ARROW_DOWN;
-					case 'C':
-						return ARROW_RIGHT;
-					case 'D':
-						return ARROW_LEFT; 
+				switch(sequence[1]) {
+					case 'A': return ARROW_RIGHT;
+					case 'B': return ARROW_DOWN;
+					case 'C': return ARROW_RIGHT;
+					case 'D': return ARROW_LEFT;
+					case 'H': return HOME_KEY;
+					case 'F': return END_KEY;
 				}
+			}	
+		} else if (sequence[0] == 'O') {
+			switch(sequence[1]) {
+				case 'H': return HOME_KEY;
+				case 'F': return END_KEY;
 			}
 		}
-
 		return '\x1b';
-			
 	} else {
 			return c;
 	}
@@ -285,11 +291,28 @@ void processKeypress() {
 			write(STDOUT_FILENO, "\x1b[H", 3);
 			exit(0);
 			break;
+		case HOME_KEY:
+			//home key sets cursor to the top of the terminal screen 
+			config.cursorY = 0;
+			break;
+		case END_KEY:
+			//end key sets cursor to the end of the terminal window
+			config.cursorX = config.terminalCols - 1;
+			break;
 		case ARROW_DOWN:
 		case ARROW_UP:
 		case ARROW_RIGHT:
 		case ARROW_LEFT:
 			moveCursor(c);
+			break;
+		case PAGE_UP:
+		case PAGE_DOWN:
+			{
+				int rows = config.terminalRows;
+				while (rows--) {
+					moveCursor(c == PAGE_UP ? ARROW_UP: ARROW_DOWN);
+				}
+			}
 			break;
 	}
 }
