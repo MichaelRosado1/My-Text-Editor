@@ -17,11 +17,12 @@ void enableRawMode();
 
 /** Data **/
 
+//ints so it does not conflict with char inputs 
 enum keys {
-	ARROW_LEFT = 'h',
-	ARROW_RIGHT = 'l',
-	ARROW_UP = 'k',
-	ARROW_DOWN = 'j'	
+	ARROW_LEFT = 1000,
+	ARROW_RIGHT,
+	ARROW_UP,
+	ARROW_DOWN	
 };
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
@@ -193,7 +194,7 @@ void editorRefreshScreen() {
 
 //implementing vim style keypresses
 
-void moveCursor(char keypress) {
+void moveCursor(int keypress) {
 	switch (keypress) {
 		case ARROW_DOWN :
 			config.cursorY--;
@@ -210,7 +211,7 @@ void moveCursor(char keypress) {
 	}
 }
 
-char readKey() {
+int readKey() {
 	char c;
 	int readStatus;
 
@@ -256,7 +257,7 @@ char readKey() {
 
 void processKeypress() {
 //used switch case because if else was not working with CTRL_KEY I will change this later for easier readability	
-	char c = readKey();
+	int c = readKey();
 	switch (c) {
 		case CTRL_KEY('q'):
 		//if cntrl q is pressed clear the screen
@@ -313,7 +314,6 @@ void initEditor() {
 		killPgrm("getTerminaSize");
 	}
 }
-
 
 int main() {
 	enableRawMode();
