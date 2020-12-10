@@ -197,16 +197,24 @@ void editorRefreshScreen() {
 void moveCursor(int keypress) {
 	switch (keypress) {
 		case ARROW_DOWN :
-			config.cursorY--;
+			if (config.cursorY != config.terminalRows- 1) {
+				config.cursorY--;
+			}
 			break;
 		case ARROW_UP:
-			config.cursorY++;
+			if (config.cursorY != 0) {
+				config.cursorY++;
+			}
 			break;
 		case ARROW_LEFT:
-			config.cursorX--;
+			if (config.cursorX != 0) {
+				config.cursorX--;
+			}
 			break;
 		case ARROW_RIGHT:
-			config.cursorX++;
+			if (config.cursorX != config.terminalCols - 1) {
+				config.cursorX++;
+			}
 			break;
 	}
 }
