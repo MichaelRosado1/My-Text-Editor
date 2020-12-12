@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <vector>
 #include <stdlib.h>
@@ -29,6 +30,13 @@ enum keys {
 	PAGE_UP,
 	PAGE_DOWN	
 };
+
+//use typedef to make an alias for a data type or struct
+// stands for Editor Row
+typedef struct erow {
+	int size;
+	char *chars;
+} erow;
 //use this struct to store the terminals original attributes
 //so when the user is done, we can set the original terminal attributes back  
 struct abuf {
@@ -40,6 +48,8 @@ struct editorConfig {
 	int terminalRows;
 	int terminalCols;
 	int cursorX, cursorY;
+	int numrows;
+	erow row;
 };
 
 struct editorConfig config;
@@ -137,35 +147,44 @@ void disableRawMode() {
 
 /** Terminal Output **/
 void drawEditorRows(struct abuf *ab) {
+	int yPos = 0;
 	for (int i = 0; i < config.terminalRows; i++) {
-		//third down the screen 
-		if (i == config.terminalRows / 3) {
-			char welcomeMessage[80];
-			//snprintf returns the number of characters that would be printed if the buffer byte size is large enough
-			int length = std::snprintf(welcomeMessage, sizeof(welcomeMessage), "Welcome to My-Text editor:)");
-			//if the message is greater than the terminal screen we shorten it
-			if (length > config.terminalCols) {
-				length = config.terminalCols;
-			}
-			//half of the terminal width
-			int padding = (config.terminalCols - length) / 2;
-			if (padding) {
+		if (yPos >= config.numrows) {
+
+			//third down the screen 
+			if (i == config.terminalRows / 3) {
+				char welcomeMessage[80];
+				//snprintf returns the number of characters that would be printed if the buffer byte size is large enough
+				int length = std::snprintf(welcomeMessage, sizeof(welcomeMessage), "Welcome to My-Text editor:)");
+				//if the message is greater than the terminal screen we shorten it
+				if (length > config.terminalCols) {
+					length = config.terminalCols;
+				}
+				//half of the terminal width
+				int padding = (config.terminalCols - length) / 2;
+				if (padding) {
+					abAppend(ab, "~", 1);
+					padding--;
+				}
+				//while the padding isn't 0, print a space
+				//	->moves to half of the terminal width
+				while (padding--) abAppend(ab, " ", 1);
+				abAppend(ab, welcomeMessage, length);
+			} else {
 				abAppend(ab, "~", 1);
-				padding--;
 			}
-			//while the padding isn't 0, print a space
-			//	->moves to half of the terminal width
-			while (padding--) abAppend(ab, " ", 1);
-			abAppend(ab, welcomeMessage, length);
+			//clears the line
+			abAppend(ab, "\x1b[K", 3);
+			//if the position reaches the end of the row, return and start a new line 
+			if (i < config.terminalRows - 1) {
+				abAppend(ab, "\r\n", 2);
+			}
 		} else {
-			abAppend(ab, "~", 1);
+			int length = config.row.size;
+			if (length > config.terminalCols) length = config.terminalCols;
+			abAppend(ab, config.row.chars, length);
 		}
-		//clears the line
-		abAppend(ab, "\x1b[K", 3);
-		//if the position reaches the end of the row, return and start a new line 
-		if (i < config.terminalRows - 1) {
-			abAppend(ab, "\r\n", 2);
-		}	
+		
 	}
 }
 void editorRefreshScreen() {
@@ -194,6 +213,18 @@ void editorRefreshScreen() {
 
 	write(STDOUT_FILENO,ab.b, ab.length ); 
 
+}
+/** file reading **/
+
+void editorOpen() {
+	char *line = (char *)"Hello, world!";
+	ssize_t linelength = 13;
+
+	config.row.size = linelength;
+	config.row.chars =(char *)std::malloc(linelength + 1);
+	std::memcpy(config.row.chars, line, linelength);
+	config.row.chars[linelength] = '\0';
+	config.numrows = 1;
 }
 /** user input **/
 
@@ -355,6 +386,7 @@ int getCursorPosition(int *rows, int *cols) {
 void initEditor() {
 	config.cursorX = 0;
 	config.cursorY = 0;
+	config.numrows = 0;
 	if (getTerminalSize(&config.terminalRows, &config.terminalCols) == -1) {
 		killPgrm("getTerminaSize");
 	}
@@ -363,6 +395,7 @@ void initEditor() {
 int main() {
 	enableRawMode();
 	initEditor();
+	editorOpen();
 	//letter typed into terminal
 	while (1) {
 		editorRefreshScreen();
