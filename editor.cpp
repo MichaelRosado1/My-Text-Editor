@@ -174,16 +174,15 @@ void drawEditorRows(struct abuf *ab) {
 				abAppend(ab, "~", 1);
 			}
 			//clears the line
-			abAppend(ab, "\x1b[K", 3);
-			//if the position reaches the end of the row, return and start a new line 
-			if (i < config.terminalRows - 1) {
-				abAppend(ab, "\r\n", 2);
-			}
 		} else {
 			int length = config.row.size;
 			if (length > config.terminalCols) length = config.terminalCols;
 			abAppend(ab, config.row.chars, length);
 		}
+		abAppend(ab, "\x1b[K", 3);
+		if (yPos < config.terminalRows - 1) {
+			abAppend(ab, "\r\n", 2);
+		}	
 		
 	}
 }
