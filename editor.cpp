@@ -147,9 +147,8 @@ void disableRawMode() {
 
 /** Terminal Output **/
 void drawEditorRows(struct abuf *ab) {
-	int yPos = 0;
 	for (int i = 0; i < config.terminalRows; i++) {
-		if (yPos >= config.numrows) {
+		if (i >= config.numrows) {
 
 			//third down the screen 
 			if (i == config.terminalRows / 3) {
@@ -180,7 +179,7 @@ void drawEditorRows(struct abuf *ab) {
 			abAppend(ab, config.row.chars, length);
 		}
 		abAppend(ab, "\x1b[K", 3);
-		if (yPos < config.terminalRows - 1) {
+		if (i < config.terminalRows - 1) {
 			abAppend(ab, "\r\n", 2);
 		}	
 		
